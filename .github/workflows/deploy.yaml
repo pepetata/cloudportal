@@ -1,4 +1,4 @@
-Deploy CloudPortal
+name: Deploy CloudPortal
 on:
   push:
     branches:
