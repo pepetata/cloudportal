@@ -1,0 +1,37 @@
+Deploy CloudPortal
+on:
+  push:
+    branches:
+      - main # check your repo, your default branch might be master!
+ 
+jobs:
+  build:
+    #runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+ 
+      - run: docker build -t pepetata1/fflicensemanager_database ./lms_db
+      - run: docker build -t pepetata1/ffcloudportal_database ./cps_db
+      - run: docker build -t pepetata1/fflicensemanager ./lms
+      - run: docker build -t pepetata1/ffcloudportal ./cps
+ 
+      - run: docker push pepetata1/fflicensemanager_database
+      - run: docker push pepetata1/ffcloudportal_database
+      - run: docker push pepetata1/fflicensemanager
+      - run: docker push pepetata1/ffcloudportal
+ 
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
+ 
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          application_name: cloud-portal
+          environment_name: Cloud-portal-env
+          existing_bucket_name: elasticbeanstalk-us-east-1-530860260315
+          region: us-east-1
+          version_label: ${{ github.sha }}
+          deployment_package: deploy.zip
